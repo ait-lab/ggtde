@@ -1,0 +1,24 @@
+Train: &train-config
+  n_envs: 5
+  policy: MlpPolicy
+  ensemble_size: 5
+  min_batch_size: 16
+  uncertainty_temperature: 0.1
+
+Box2D: &box2d-default
+  <<: *train-config
+
+LunarLanderNoisy:
+  <<: *box2d-default
+  n_timesteps: !!float 7e5
+
+ClassicControl: &classic-control-default
+  <<: *train-config
+
+CartPoleNoisy:
+  <<: *classic-control-default
+  n_timesteps: !!float 3e6
+
+MountainCarNoisy:
+  <<: *classic-control-default
+  n_timesteps: !!float 5e6

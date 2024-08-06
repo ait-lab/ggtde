@@ -1,0 +1,30 @@
+Train: &train-config
+  n_envs: 5
+  policy: MlpPolicy
+  ensemble_size: 5
+  min_batch_size: 16
+  uncertainty_temperature: 0.1
+
+MuJoCo: &mujoco-default
+  <<: *train-config
+  env_wrapper: sb3_contrib.common.wrappers.TimeFeatureWrapper
+
+Ant-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 5e6
+
+HalfCheetah-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 1e7
+
+Hopper-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 3e6
+
+Humanoid-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 1e7
+
+Walker2d-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 1e7
