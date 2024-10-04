@@ -1,0 +1,48 @@
+Train: &train-config
+  n_envs: 5
+  policy: MlpPolicy
+  ensemble_size: 5
+  min_batch_size: 16
+  uncertainty_temperature: 0.1
+
+Box2D: &box2d-default
+  <<: *train-config
+
+LunarLanderNoisy:
+  <<: *box2d-default
+  n_timesteps: !!float 1e6
+
+ClassicControl: &classic-control-default
+  <<: *train-config
+
+CartPoleNoisy:
+  <<: *classic-control-default
+  n_timesteps: !!float 2e5
+
+MountainCarNoisy:
+  <<: *classic-control-default
+  n_timesteps: !!float 2e6
+
+MuJoCo: &mujoco-default
+  <<: *train-config
+  env_wrapper: sb3_contrib.common.wrappers.TimeFeatureWrapper
+
+Ant-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 1e7
+
+HalfCheetah-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 3e6
+
+Hopper-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 3e6
+
+Humanoid-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 1e7
+
+Walker2d-v4:
+  <<: *mujoco-default
+  n_timesteps: !!float 3e6

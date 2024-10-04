@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "ggtde"
+version = "2"
+description = "Generalized Gaussian Temporal Difference Error for Uncertainty-aware Reinforcement Learning"
+authors = [
+  "Joonhun Lee <joonhun.lee@qraftec.com>",
+  "Seyeon Kim <seyeon.kim@qraftec.com>",
+]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "~3.9"
+black = "~24.3"
+gymnasium = { extras = ["box2d", "mujoco"], version = "~0.29" }
+ipykernel = "~6.29"
+isort = "~5.13"
+pre-commit = "~3.8"
+pyyaml = "~6.0"
+rl-zoo3 = "~2.2"
+scienceplots = "~2.1"
+scipy = "~1.12"
+tensorboard = "~2.16"
+torch = "~2.2"
+wandb = "~0.18"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
