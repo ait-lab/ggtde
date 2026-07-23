@@ -49,7 +49,7 @@ def ggd_nll_loss(values: th.Tensor, targets: th.Tensor) -> th.Tensor:
         (
             (values[:, i, 0] - targets[:, i]).abs() * beta[:, i]
             - beta[:, i].log()
-            + beta[:, i].pow(-1).lgamma()
+            + beta[:, i].reciprocal().lgamma()
         )
         * beta[:, i]
         / beta.sum(dim=-1)

@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 
-import torch
+import torch as th
 import wandb
 
 from algos import ALGOS
@@ -61,8 +61,8 @@ def main():
     args = parser.parse_args()
 
     if not (
-        hasattr(torch.backends, args.device)
-        and getattr(torch.backends, args.device).is_available()
+        hasattr(th.backends, args.device)
+        and getattr(th.backends, args.device).is_available()
     ):
         args.device = "auto"
 

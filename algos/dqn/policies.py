@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Any, ClassVar, Dict, List, Literal, Optional, Type
 
 import torch as th
@@ -83,13 +82,14 @@ class QNetwork(OriginalQNetwork):
 
 
 class MlpPolicy(BasePolicy, DQNPolicy):
+    ensemble_size: int
+    distribution: Optional[Literal["gaussian", "ggd"]]
+
     def __init__(
         self,
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[List[int]] = None,
         activation_fn: Type[nn.Module] = nn.ReLU,
         features_extractor_class: Type[BaseFeaturesExtractor] = FlattenExtractor,
@@ -98,9 +98,6 @@ class MlpPolicy(BasePolicy, DQNPolicy):
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
-        self.ensemble_size = ensemble_size
-        self.distribution = distribution
-
         super().__init__(
             observation_space,
             action_space,
@@ -118,7 +115,9 @@ class MlpPolicy(BasePolicy, DQNPolicy):
             self.net_args, features_extractor=None
         )
         return QNetwork(
-            **net_args, ensemble_size=self.ensemble_size, distribution=self.distribution  # type: ignore
+            **net_args,
+            ensemble_size=self.ensemble_size,
+            distribution=self.distribution,  # type: ignore
         ).to(self.device)
 
 
@@ -128,8 +127,6 @@ class CnnPolicy(MlpPolicy):
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[List[int]] = None,
         activation_fn: Type[nn.Module] = nn.ReLU,
         features_extractor_class: Type[BaseFeaturesExtractor] = NatureCNN,
@@ -142,8 +139,6 @@ class CnnPolicy(MlpPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            ensemble_size,
-            distribution,
             net_arch=net_arch,
             activation_fn=activation_fn,
             features_extractor_class=features_extractor_class,
@@ -159,8 +154,6 @@ class MultiInputPolicy(MlpPolicy):
         observation_space: spaces.Space,
         action_space: spaces.Discrete,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[List[int]] = None,
         activation_fn: Type[nn.Module] = nn.ReLU,
         features_extractor_class: Type[BaseFeaturesExtractor] = CombinedExtractor,
@@ -173,8 +166,6 @@ class MultiInputPolicy(MlpPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            ensemble_size,
-            distribution,
             net_arch=net_arch,
             activation_fn=activation_fn,
             features_extractor_class=features_extractor_class,
@@ -187,14 +178,14 @@ class MultiInputPolicy(MlpPolicy):
 def get_policy_aliases(
     ensemble_size: int, distribution: Optional[Literal["gaussian", "ggd"]]
 ) -> ClassVar[Dict[str, Type[DQNPolicy]]]:  # type: ignore
+    MlpPolicy.ensemble_size = CnnPolicy.ensemble_size = (
+        MultiInputPolicy.ensemble_size
+    ) = ensemble_size
+    MlpPolicy.distribution = CnnPolicy.distribution = MultiInputPolicy.distribution = (
+        distribution
+    )
     return {
-        "MlpPolicy": partial(
-            MlpPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
-        "CnnPolicy": partial(
-            CnnPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
-        "MultiInputPolicy": partial(
-            MultiInputPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
+        "MlpPolicy": MlpPolicy,
+        "CnnPolicy": CnnPolicy,
+        "MultiInputPolicy": MultiInputPolicy,
     }

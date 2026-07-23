@@ -45,13 +45,14 @@ class ValueNetwork(nn.Module):
 
 
 class MlpPolicy(BasePolicy, ActorCriticPolicy):
+    ensemble_size: int
+    distribution: Optional[Literal["gaussian", "ggd"]]
+
     def __init__(
         self,
         observation_space: spaces.Space,
         action_space: spaces.Space,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
         activation_fn: Type[nn.Module] = nn.Tanh,
         ortho_init: bool = True,
@@ -65,9 +66,6 @@ class MlpPolicy(BasePolicy, ActorCriticPolicy):
         optimizer_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
-        self.ensemble_size = ensemble_size
-        self.distribution = distribution
-
         super().__init__(
             observation_space,
             action_space,
@@ -115,7 +113,9 @@ class MlpPolicy(BasePolicy, ActorCriticPolicy):
             raise NotImplementedError(f"Unsupported distribution '{self.action_dist}'.")
 
         self.value_net = ValueNetwork(
-            self.mlp_extractor.latent_dim_vf, self.ensemble_size, self.distribution  # type: ignore
+            self.mlp_extractor.latent_dim_vf,
+            self.ensemble_size,
+            self.distribution,  # type: ignore
         )
 
         if self.ortho_init:
@@ -134,7 +134,9 @@ class MlpPolicy(BasePolicy, ActorCriticPolicy):
                 module.apply(partial(self.init_weights, gain=gain))
 
         self.optimizer = self.optimizer_class(
-            self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs  # type: ignore
+            self.parameters(),
+            lr=lr_schedule(1),
+            **self.optimizer_kwargs,  # type: ignore
         )
 
 
@@ -144,8 +146,6 @@ class CnnPolicy(MlpPolicy):
         observation_space: spaces.Space,
         action_space: spaces.Space,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
         activation_fn: Type[nn.Module] = nn.Tanh,
         ortho_init: bool = True,
@@ -160,8 +160,6 @@ class CnnPolicy(MlpPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            ensemble_size,
-            distribution,
             net_arch=net_arch,
             activation_fn=activation_fn,
             ortho_init=ortho_init,
@@ -180,8 +178,6 @@ class MultiInputPolicy(MlpPolicy):
         observation_space: spaces.Dict,
         action_space: spaces.Space,
         lr_schedule: Schedule,
-        ensemble_size: int,
-        distribution: Optional[Literal["gaussian", "ggd"]],
         net_arch: Optional[Union[List[int], Dict[str, List[int]]]] = None,
         activation_fn: Type[nn.Module] = nn.Tanh,
         ortho_init: bool = True,
@@ -196,8 +192,6 @@ class MultiInputPolicy(MlpPolicy):
             observation_space,
             action_space,
             lr_schedule,
-            ensemble_size,
-            distribution,
             net_arch=net_arch,
             activation_fn=activation_fn,
             ortho_init=ortho_init,
@@ -213,14 +207,14 @@ class MultiInputPolicy(MlpPolicy):
 def get_policy_aliases(
     ensemble_size: int, distribution: Optional[Literal["gaussian", "ggd"]]
 ) -> ClassVar[Dict[str, Type[ActorCriticPolicy]]]:  # type: ignore
+    MlpPolicy.ensemble_size = CnnPolicy.ensemble_size = (
+        MultiInputPolicy.ensemble_size
+    ) = ensemble_size
+    MlpPolicy.distribution = CnnPolicy.distribution = MultiInputPolicy.distribution = (
+        distribution
+    )
     return {
-        "MlpPolicy": partial(
-            MlpPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
-        "CnnPolicy": partial(
-            CnnPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
-        "MultiInputPolicy": partial(
-            MultiInputPolicy, ensemble_size=ensemble_size, distribution=distribution
-        ),
+        "MlpPolicy": MlpPolicy,
+        "CnnPolicy": CnnPolicy,
+        "MultiInputPolicy": MultiInputPolicy,
     }

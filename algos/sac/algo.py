@@ -74,7 +74,7 @@ class SAC(OffPolicyAlgorithm, OriginalSAC):
         self.policy.set_training_mode(True)
         optimizers = [self.actor.optimizer, self.critic.optimizer]
         if self.ent_coef_optimizer is not None:
-            optimizers += [self.ent_coef_optimizer]
+            optimizers.append(self.ent_coef_optimizer)
         self._update_learning_rate(optimizers)
 
         actor_losses, ent_coefs, ent_coef_losses, critic_losses = [], [], [], []
